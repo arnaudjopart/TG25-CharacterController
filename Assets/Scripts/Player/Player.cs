@@ -117,7 +117,7 @@ public class Player : MonoBehaviour
     {
         _jumpBuffer = 0;
         _isApplyingJump = true;
-        if (_isGrounded || _nbDoubleJump < 1)
+        if (_isGrounded || _nbDoubleJump <= 1)
         {
             Jump();
         }
