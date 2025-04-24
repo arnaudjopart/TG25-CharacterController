@@ -52,7 +52,6 @@ public class Player : MonoBehaviour
             case STATE.MOVE:
                 _nbDoubleJump = 0;
                 _rigidbody2D.linearVelocity = new Vector2(xMovement*_currentSpeed*Time.fixedDeltaTime, _rigidbody2D.linearVelocityY);
-                
                 break;
             case STATE.JUMP:
                 if (_rigidbody2D.linearVelocity.y > 0 && _isApplyingJump == false)
@@ -149,22 +148,35 @@ public class Player : MonoBehaviour
         _jumpBuffer+=Time.deltaTime;
         _isGrounded = Physics2D.OverlapCircle(m_overlapBotton.position, m_groundCheckRadius, m_groundLayerMask);
 
-        if (_isGrounded && !_wasGroundedPreviousFrame)
+        switch (_currentState)
         {
-            if (_isApplyingJump && _jumpBuffer < _jumpBufferMax) GoToJumpState();
-            else GoToMoveState();
-        }
-        
-        if (_isGrounded == false && _wasGroundedPreviousFrame) GoToFallState();
-        {
-            /*if (_isJumping == false)
+            case STATE.MOVE:
+                if (_isGrounded == false && _wasGroundedPreviousFrame) GoToFallState();
             {
-                _linearVelocityXOnJumpStart = Mathf.Abs(_rigidbody2D.linearVelocity.x);
-            }*/
+                /*if (_isJumping == false)
+                {
+                    _linearVelocityXOnJumpStart = Mathf.Abs(_rigidbody2D.linearVelocity.x);
+                }*/
+            }
+                break;
+            case STATE.JUMP:
+                
+                if (_rigidbody2D.linearVelocity.y < 0) GoToFallState();
+                
+                break;
+            case STATE.FALL:
+                if (_isGrounded && !_wasGroundedPreviousFrame)
+                {
+                    if (_isApplyingJump && _jumpBuffer < _jumpBufferMax) GoToJumpState();
+                    else GoToMoveState();
+                }
+                break;
+            case STATE.HANG:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
         }
         
-        
-        if (_rigidbody2D.linearVelocity.y < 0) GoToFallState();
         _wasGroundedPreviousFrame = _isGrounded;
     }
 

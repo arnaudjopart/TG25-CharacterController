@@ -926,6 +926,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2017b46ba817bf243a32f7956c914aae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _currentState: 0
   _jumpForce: 6
   _currentSpeed: 200
   _lowJumpFactor: 10
@@ -942,9 +943,8 @@ MonoBehaviour:
   _jumpBufferMax: 0.5
   _leftCollisionCheck: {fileID: 1411237901}
   _rightCollisionCheck: {fileID: 1912598165}
-  _camMoveRight: 0
-  _camMoveLeft: 0
   _capsuleSize: {x: 0.1, y: 0.5}
+  _nbDoubleJump: 0
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
