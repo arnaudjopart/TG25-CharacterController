@@ -5,6 +5,7 @@ using Input;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 
 [RequireComponent(typeof(CharacterController2D))]
 [RequireComponent(typeof(Rigidbody2D))]
@@ -23,49 +24,33 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        _controller.SubscribeToJumpEvent(OnJump);
+        _controller.SubscribeToJumpEvent(OnJumpStart);
         _controller.SubscribeToJumpEndEvent(OnJumpEnd);
     }
 
     private void OnDestroy()
     {
-        _controller.UnsubscribeToJumpEvent(OnJump);
+        _controller.UnsubscribeToJumpEvent(OnJumpStart);
         _controller.UnsubscribeToJumpEndEvent(OnJumpEnd);
     }
 
     private void FixedUpdate()
     {
-        var xMovement = _controller.MoveInput.x;
-        _camMoveRight = CanMoveRight();
-        _camMoveLeft = CanMoveLeft();
-        if (xMovement < 0 && !CanMoveLeft()) xMovement = 0;
-        if (xMovement > 0 && !CanMoveRight()) xMovement = 0;
-        
-        if (Mathf.Abs(_rigidbody2D.linearVelocity.x) > _maxVelocity)
-        {
-            float sign = Mathf.Sign(_rigidbody2D.linearVelocity.x);
-            _rigidbody2D.linearVelocity = new Vector2(sign*_maxVelocity,_rigidbody2D.linearVelocity.y);
-        }
 
+        
         switch (_currentState)
         {
             case STATE.MOVE:
                 _nbDoubleJump = 0;
-                _rigidbody2D.linearVelocity = new Vector2(xMovement*_currentSpeed*Time.fixedDeltaTime, _rigidbody2D.linearVelocityY);
+                _rigidbody2D.linearVelocity = new Vector2(_xMovement*_currentSpeed*Time.fixedDeltaTime, _rigidbody2D.linearVelocityY);
                 break;
             case STATE.JUMP:
-                if (_rigidbody2D.linearVelocity.y > 0 && _isApplyingJump == false)
-                {
-                    var velocity = _rigidbody2D.linearVelocity;
-                    velocity += Vector2.up * (Physics2D.gravity.y * _lowJumpFactor * Time.deltaTime);
-                    _rigidbody2D.linearVelocity = velocity;
-                }
-                _rigidbody2D.AddForce(new Vector2(_controller.MoveInput.x*_jumpMoveForce,0));
-                if (Mathf.Abs(_rigidbody2D.linearVelocity.x) > _linearVelocityXOnJumpStart*_jumpVelocityXModifier)
-                {
-                    float sign = Mathf.Sign(_rigidbody2D.linearVelocity.x);
-                    _rigidbody2D.linearVelocity = new Vector2(sign*_linearVelocityXOnJumpStart*_jumpVelocityXModifier,_rigidbody2D.linearVelocity.y);
-                }
+                
+                LimitJumpHeight(); 
+                AirborneMove();
+
+                
+               
                 break;
             case STATE.FALL:
                 _rigidbody2D.AddForce(new Vector2(_controller.MoveInput.x*_jumpMoveForce,0));
@@ -81,18 +66,40 @@ public class Player : MonoBehaviour
                 throw new ArgumentOutOfRangeException();
         }
         
-
         if (Mathf.Abs(_rigidbody2D.linearVelocity.x) > _maxVelocity)
         {
             float sign = Mathf.Sign(_rigidbody2D.linearVelocity.x);
             _rigidbody2D.linearVelocity = new Vector2(sign*_maxVelocity,_rigidbody2D.linearVelocity.y);
         }
+
         _debugText.SetText(_rigidbody2D.linearVelocity.x.ToString(CultureInfo.InvariantCulture));
+    }
+
+    private void LimitJumpHeight()
+    {
+        if (_rigidbody2D.linearVelocity.y > 0 && _isApplyingJump == false)
+        {
+            var velocity = _rigidbody2D.linearVelocity;
+            velocity += Vector2.up * (Physics2D.gravity.y * _lowJumpFactor * Time.deltaTime);
+            _rigidbody2D.linearVelocity = velocity;
+        }
+    }
+
+    private void AirborneMove()
+    {
+        _rigidbody2D.AddForce(new Vector2(_xMovement*_jumpMoveForce,0));
+        if (Mathf.Abs(_rigidbody2D.linearVelocity.x) > _linearVelocityXOnJumpStart*_jumpVelocityXModifier)
+        {
+            float sign = Mathf.Sign(_rigidbody2D.linearVelocity.x);
+            _rigidbody2D.linearVelocity = new Vector2(sign*_linearVelocityXOnJumpStart*_jumpVelocityXModifier,_rigidbody2D.linearVelocity.y);
+        }
     }
 
     private void GoToFallState()
     {
         _currentState = STATE.FALL;
+        _linearVelocityXOnJumpStart = Mathf.Abs(_rigidbody2D.linearVelocity.x);
+        
     }
 
     private bool CanMoveLeft()
@@ -113,11 +120,11 @@ public class Player : MonoBehaviour
         _isApplyingJump = false;
     }
 
-    private void OnJump()
+    private void OnJumpStart()
     {
         _jumpBuffer = 0;
         _isApplyingJump = true;
-        if (_isGrounded || _nbDoubleJump <= 1)
+        if (_isGrounded || _nbDoubleJump <= _maxAirJump)
         {
             Jump();
         }
@@ -133,7 +140,6 @@ public class Player : MonoBehaviour
                 _currentState = STATE.JUMP;
                 ResetVerticalVelocity();
                 _nbDoubleJump++;
-                _isJumping = true;
                 _isApplyingJump = true;
                 _linearVelocityXOnJumpStart = Mathf.Max(1,Mathf.Abs(_rigidbody2D.linearVelocity.x));
                 _rigidbody2D.AddForce(Vector2.up*_jumpForce, ForceMode2D.Impulse);
@@ -145,6 +151,10 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        _xMovement = Mathf.SmoothDamp(_xMovement,_controller.MoveInput.x,ref _currentVelocity,_smoothTime);
+        if (_xMovement < 0 && !CanMoveLeft()) _xMovement = 0;
+        if (_xMovement > 0 && !CanMoveRight()) _xMovement = 0;
+        
         _jumpBuffer+=Time.deltaTime;
         _isGrounded = Physics2D.OverlapCircle(m_overlapBotton.position, m_groundCheckRadius, m_groundLayerMask);
 
@@ -152,12 +162,6 @@ public class Player : MonoBehaviour
         {
             case STATE.MOVE:
                 if (_isGrounded == false && _wasGroundedPreviousFrame) GoToFallState();
-            {
-                /*if (_isJumping == false)
-                {
-                    _linearVelocityXOnJumpStart = Mathf.Abs(_rigidbody2D.linearVelocity.x);
-                }*/
-            }
                 break;
             case STATE.JUMP:
                 
@@ -182,6 +186,7 @@ public class Player : MonoBehaviour
 
     private void GoToJumpState()
     {
+        _nbDoubleJump = 0;
         ResetVerticalVelocity();
         Jump();
     }
@@ -209,7 +214,6 @@ public class Player : MonoBehaviour
     
     
     private bool _isGrounded;
-    private bool _isJumping;
     
     [Header("Ground Check")]
     [SerializeField] private Transform m_overlapBotton;
@@ -221,17 +225,22 @@ public class Player : MonoBehaviour
     [SerializeField]private float _jumpMoveForce =5;
     [SerializeField]private float _maxVelocity=200;
     private float _linearVelocityXOnJumpStart;
-    [SerializeField] private float _jumpVelocityXModifier;
+    [SerializeField] private float _jumpVelocityXModifier;    
+    [SerializeField] private int _maxAirJump=1;
+    [SerializeField] private float _fallingMultiplier=2.3f;
     
     [SerializeField] private TMP_Text _debugText;
     private float _jumpBuffer;
     [SerializeField] private float _jumpBufferMax =.5f;
     [SerializeField] private Transform _leftCollisionCheck;
     [SerializeField] private Transform _rightCollisionCheck;
-    private bool _camMoveRight;
-    private bool _camMoveLeft;
+
     [SerializeField] private Vector2 _capsuleSize = new Vector2(.5f,.5f);
     [SerializeField] private int _nbDoubleJump;
+    [SerializeField] private float _smoothTime=.5f;
+    private float _xMovement;
+    private float _currentVelocity;
+    
 
     #endregion
 
