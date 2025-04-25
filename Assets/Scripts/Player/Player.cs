@@ -49,11 +49,7 @@ public class Player : MonoBehaviour
                 LimitJumpHeight(); 
                 AirborneMove();
 
-                if (_rigidbody2D.linearVelocity.y < 0)
-                {
-                    _rigidbody2D.AddForce(Vector2.down*2,ForceMode2D.Impulse);
-                    GoToFallState();
-                }
+                
                
                 break;
             case STATE.FALL:
@@ -155,10 +151,10 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
         _xMovement = Mathf.SmoothDamp(_xMovement,_controller.MoveInput.x,ref _currentVelocity,_smoothTime);
         if (_xMovement < 0 && !CanMoveLeft()) _xMovement = 0;
         if (_xMovement > 0 && !CanMoveRight()) _xMovement = 0;
+        
         _jumpBuffer+=Time.deltaTime;
         _isGrounded = Physics2D.OverlapCircle(m_overlapBotton.position, m_groundCheckRadius, m_groundLayerMask);
 
@@ -169,7 +165,7 @@ public class Player : MonoBehaviour
                 break;
             case STATE.JUMP:
                 
-                
+                if (_rigidbody2D.linearVelocity.y < 0) GoToFallState();
                 
                 break;
             case STATE.FALL:
