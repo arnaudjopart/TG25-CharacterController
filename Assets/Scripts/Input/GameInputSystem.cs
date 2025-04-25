@@ -73,6 +73,15 @@ namespace com.ajc.input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""JumpDown"",
+                    ""type"": ""Button"",
+                    ""id"": ""c8c41e99-9ad8-4893-b323-5ab80ba46440"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -359,6 +368,28 @@ namespace com.ajc.input
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4672d273-c76d-4f9f-b56d-810db73912fb"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""JumpDown"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4803f79e-57df-455e-baea-7e0ea3d25288"",
+                    ""path"": ""<Keyboard>/downArrow"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""JumpDown"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -951,6 +982,7 @@ namespace com.ajc.input
             m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
             m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
             m_Player_Sprint = m_Player.FindAction("Sprint", throwIfNotFound: true);
+            m_Player_JumpDown = m_Player.FindAction("JumpDown", throwIfNotFound: true);
             // UI
             m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
             m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1035,6 +1067,7 @@ namespace com.ajc.input
         private readonly InputAction m_Player_Interact;
         private readonly InputAction m_Player_Jump;
         private readonly InputAction m_Player_Sprint;
+        private readonly InputAction m_Player_JumpDown;
         public struct PlayerActions
         {
             private @GameInputSystem m_Wrapper;
@@ -1044,6 +1077,7 @@ namespace com.ajc.input
             public InputAction @Interact => m_Wrapper.m_Player_Interact;
             public InputAction @Jump => m_Wrapper.m_Player_Jump;
             public InputAction @Sprint => m_Wrapper.m_Player_Sprint;
+            public InputAction @JumpDown => m_Wrapper.m_Player_JumpDown;
             public InputActionMap Get() { return m_Wrapper.m_Player; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -1068,6 +1102,9 @@ namespace com.ajc.input
                 @Sprint.started += instance.OnSprint;
                 @Sprint.performed += instance.OnSprint;
                 @Sprint.canceled += instance.OnSprint;
+                @JumpDown.started += instance.OnJumpDown;
+                @JumpDown.performed += instance.OnJumpDown;
+                @JumpDown.canceled += instance.OnJumpDown;
             }
 
             private void UnregisterCallbacks(IPlayerActions instance)
@@ -1087,6 +1124,9 @@ namespace com.ajc.input
                 @Sprint.started -= instance.OnSprint;
                 @Sprint.performed -= instance.OnSprint;
                 @Sprint.canceled -= instance.OnSprint;
+                @JumpDown.started -= instance.OnJumpDown;
+                @JumpDown.performed -= instance.OnJumpDown;
+                @JumpDown.canceled -= instance.OnJumpDown;
             }
 
             public void RemoveCallbacks(IPlayerActions instance)
@@ -1274,6 +1314,7 @@ namespace com.ajc.input
             void OnInteract(InputAction.CallbackContext context);
             void OnJump(InputAction.CallbackContext context);
             void OnSprint(InputAction.CallbackContext context);
+            void OnJumpDown(InputAction.CallbackContext context);
         }
         public interface IUIActions
         {

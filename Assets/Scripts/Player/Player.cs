@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Globalization;
 using Input;
@@ -13,7 +14,8 @@ public class Player : MonoBehaviour
 {
     
     public STATE _currentState;
-    
+    public Platform CurrentPlatform { get; set; }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
     {
@@ -26,6 +28,24 @@ public class Player : MonoBehaviour
     {
         _controller.SubscribeToJumpEvent(OnJumpStart);
         _controller.SubscribeToJumpEndEvent(OnJumpEnd);
+        
+        _controller.SubscribeToJumpDownEvent(OnJumpDown);
+    }
+
+    private void OnJumpDown()
+    {
+        if (CurrentPlatform != null)
+        {
+            _collider.enabled = false;
+            StartCoroutine(Reactivate());
+            CurrentPlatform = null;
+        }
+    }
+
+    private IEnumerator Reactivate()
+    {
+        yield return new WaitForSeconds(.5f);
+        _collider.enabled = true;
     }
 
     private void OnDestroy()
@@ -240,7 +260,7 @@ public class Player : MonoBehaviour
     [SerializeField] private float _smoothTime=.5f;
     private float _xMovement;
     private float _currentVelocity;
-    
+    [SerializeField] private Collider2D _collider;
 
     #endregion
 

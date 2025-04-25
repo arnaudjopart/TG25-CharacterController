@@ -11,11 +11,15 @@ namespace Input
         void SubscribeToJumpEndEvent(Action jumpAction);
         void UnsubscribeToJumpEvent(Action jumpAction);
         void UnsubscribeToJumpEndEvent(Action jumpAction);
+        
+        void SubscribeToJumpDownEvent(Action jumpAction);
+        void UnsubscribeToJumpDownEvent(Action jumpAction);
         Vector2 MoveInput { get; }
     }
 
     public class CharacterController2D : MonoBehaviour, GameInputSystem.IPlayerActions, ICharacterController2D
     {
+
 
         public Vector2 MoveInput => _moveInput;
 
@@ -66,6 +70,11 @@ namespace Input
             
         }
 
+        public void OnJumpDown(InputAction.CallbackContext context)
+        {
+            if(context.started) _onJumpDownEvent?.Invoke();
+        }
+
         public void SubscribeToJumpEvent(Action jumpAction)
         {
             _onJumpStartEvent += jumpAction;
@@ -83,7 +92,17 @@ namespace Input
         {
             _onJumpEndEvent -= jumpAction;
         }
+
+        public void SubscribeToJumpDownEvent(Action jumpAction)
+        {
+            _onJumpDownEvent+=jumpAction;
+        }
         
+        public void UnsubscribeToJumpDownEvent(Action jumpAction)
+        {
+            _onJumpDownEvent-=jumpAction;
+        }
+
         #region Private Variables
 
         private Action _onJumpStartEvent;
@@ -91,7 +110,7 @@ namespace Input
         
         private GameInputSystem _gameInputSystem;
         private Vector2 _moveInput;
-
+        private Action _onJumpDownEvent;
 
         #endregion
     }
